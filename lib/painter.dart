@@ -51,12 +51,6 @@ class Painter extends CustomPainter {
                 list[i].curCircles[j].first, list[i].curCircles[j].second,
                 paintRed);
           }
-          else if(j == 4) {
-            canvas.drawCircle(list[i].curCircles[j].first, list[i].curCircles[j].second, paintPurple);
-          }
-          else {
-            canvas.drawCircle(list[i].curCircles[j].first, list[i].curCircles[j].second, paintTeal);
-          }
         }
       }
       canvas.restore();
@@ -75,70 +69,5 @@ class Painter extends CustomPainter {
 
     list[i].curCircles.add(Pair(first: Offset(list[i].begin.dx + list[i].width,
         list[i].begin.dy + list[i].height), second: 5));
-
-    list[i].curCircles.add(Pair(first: Offset(list[i].begin.dx, list[i].begin.dy + list[i].height * 2), second: 5));
-
-    list[i].curCircles.add(Pair(first: Offset(list[i].begin.dx + list[i].width, list[i].begin.dy + list[i].height * 2), second: 5));
   }
 }
-
-
-
-//
-// class Painter extends CustomPainter {
-//
-//   final CanvasModel canvasModel;
-//
-//   Painter({required this.canvasModel});
-//
-//   static final TextPainter textPainter = TextPainter(
-//     text: const TextSpan(
-//       text: 'HELLO',
-//       style: TextStyle(
-//         color: Colors.black,
-//         fontSize: 30,
-//       ),
-//     ),
-//     textAlign: TextAlign.center,
-//     textDirection: TextDirection.ltr,
-//   );
-//
-//
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//
-//     textPainter.layout(maxWidth: 100);
-//     canvasModel.width = textPainter.width;
-//     canvasModel.height = textPainter.height;
-//
-//     canvas.save();
-//     canvas.transform(canvasModel.matrix.storage);
-//
-//     textPainter.paint(canvas, Offset(canvasModel.begin.dx + 5, canvasModel.begin.dy + 5));
-//
-//     if(canvasModel.selected) {
-//       canvas.drawRect(Rect.fromLTWH(canvasModel.begin.dx, canvasModel.begin.dy, textPainter.width + 10, textPainter.height + 10), paintObject);
-//     }
-//
-//     canvas.restore();
-//   }
-//
-//   @override
-//   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

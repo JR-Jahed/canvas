@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:canvas_object/painter.dart';
+import 'package:canvas_object/pair.dart';
 import 'package:canvas_object/values.dart';
 import 'package:flutter/material.dart';
 
@@ -52,6 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<CanvasModel> list = [];
 
+  double  _currentSliderValue = 0;
+
   void deselectAll() {
     for (int i = 0; i < list.length; i++) {
       list[i].selected = false;
@@ -91,6 +95,45 @@ class _MyHomePageState extends State<MyHomePage> {
           curHeight * (list[i].isFlippedVertically ? -1 : 0);
       double endX = beginX + curWidth;
       double endY = beginY + curHeight;
+
+      if (x >= beginX && x <= endX && y >= beginY && y <= endY && ans == -1) {
+        ans = i;
+      } else {
+        // following line deselects an object if the user tapped outside it
+        list[i].selected = false;
+      }
+    }
+
+    return ans;
+  }
+  int getIdx2(double x, double y) {
+    int ans = -1;
+
+    for (int i = 0; i < list.length; i++) {
+      double curWidth = (list[i].widthAfterScaling < 0
+          ? list[i].width
+          : list[i].widthAfterScaling);
+      double curHeight = (list[i].heightAfterScaling < 0
+          ? list[i].height
+          : list[i].heightAfterScaling);
+
+      double beginX = list[i].begin.dx +
+          list[i].matrix.getTranslation().x +
+          curWidth * (list[i].isFlippedHorizontally ? -1 : 0);
+      double beginY = list[i].begin.dy +
+          list[i].matrix.getTranslation().y +
+          curHeight * (list[i].isFlippedVertically ? -1 : 0);
+
+      Pair<double, double> p = unrotated(beginX, beginY);
+      beginX = p.first;
+      beginY = p.second;
+
+      double endX = beginX + curWidth;
+      double endY = beginY + curHeight;
+
+      p = unrotated(x, y);
+      x = p.first;
+      y = p.second;
 
       if (x >= beginX && x <= endX && y >= beginY && y <= endY && ans == -1) {
         ans = i;
@@ -179,6 +222,69 @@ class _MyHomePageState extends State<MyHomePage> {
     return -1;
   }
 
+  int getIdxOfCircle2(double x, double y) {
+    if (currentlySelected == -1) return -1;
+
+    double curWidth = (list[currentlySelected].widthAfterScaling < 0
+        ? list[currentlySelected].width
+        : list[currentlySelected].widthAfterScaling);
+    double curHeight = (list[currentlySelected].heightAfterScaling < 0
+        ? list[currentlySelected].height
+        : list[currentlySelected].heightAfterScaling);
+
+    List<Offset> tmp = [];
+
+    Offset upperLeft = Offset(
+        list[currentlySelected].matrix.getTranslation().x,
+        list[currentlySelected].matrix.getTranslation().y); // no change for flip
+
+    Pair<double, double> p = unrotated(upperLeft.dx, upperLeft.dy);
+    upperLeft = Offset(p.first, p.second);
+    tmp.add(upperLeft);
+
+    tmp.add(Offset(
+        upperLeft.dx +
+            curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1), upperLeft.dy)); // change if flipped hor
+
+    tmp.add(Offset(
+        upperLeft.dx,
+        upperLeft.dy +
+            curHeight * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change if flipped ver
+
+    tmp.add(Offset(
+        upperLeft.dx +
+            curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
+        upperLeft.dy +
+            curHeight * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
+
+    // tmp.add(Offset(
+    //     upperLeft.dx,
+    //     upperLeft.dy +
+    //         curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
+    //
+    // tmp.add(Offset(
+    //     upperLeft.dx + curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
+    //     upperLeft.dy + curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
+
+    //print('x = $x  y = $y');
+    p = unrotated(x, y);
+    x = p.first;
+    y = p.second;
+    //print('x = $x  y = $y');
+
+    for (int i = 0; i < tmp.length; i++) {
+      final o = tmp[i];
+      if (x >= o.dx - 20 &&
+          x <= o.dx + 20 &&
+          y >= o.dy - 20 &&
+          y <= o.dy + 20) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
   void translate(double tX, double tY) {
     opMat.setFrom(downMat);
     opMat.translate(tX, tY);
@@ -196,24 +302,48 @@ class _MyHomePageState extends State<MyHomePage> {
   void flipHorizontally() {
     list[currentlySelected].isFlippedHorizontally ^= true;
     opMat.setFrom(downMat);
-    opMat.translate(
-        list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+    opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
     opMat.storage[0] *= -1;
-    opMat.translate(-list[currentlySelected].width / 2,
-        -list[currentlySelected].height / 2);
+    opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
     list[currentlySelected].matrix.setFrom(opMat);
   }
 
   void flipVertically() {
     list[currentlySelected].isFlippedVertically ^= true;
     opMat.setFrom(downMat);
-    opMat.translate(
-        list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+    opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
     opMat.storage[5] *= -1;
-    opMat.translate(-list[currentlySelected].width / 2,
-        -list[currentlySelected].height / 2);
+    opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
     list[currentlySelected].matrix.setFrom(opMat);
   }
+
+
+  double curRotation = 0, midX = 0, midY = 0;
+  double degToRad(double deg) {
+    return deg * pi / 180;
+  }
+  double radToDeg(double rad) {
+    return rad * 180 / pi;
+  }
+  void calculateMid() {
+    midX = list[currentlySelected].matrix.getTranslation().x + list[currentlySelected].width / 2;
+    midY = list[currentlySelected].matrix.getTranslation().y + list[currentlySelected].height / 2;
+  }
+  Pair<double, double> unrotated(double x, double y) {
+    double xx = (x - midX) * cos(degToRad(curRotation)) - (midY - y) * sin(degToRad(curRotation)) + midX;
+    double yy = (midX - x) * sin(degToRad(curRotation)) + (y - midY) * cos(degToRad(curRotation)) + midY;
+
+    return Pair(first: xx, second: yy);
+  }
+  void rotate(double r, double tX, double tY) {
+    list[currentlySelected].rotation += radToDeg(r);
+    opMat.setFrom(downMat);
+    opMat.translate(tX, tY);
+    opMat.rotateZ(r);
+    opMat.translate(-tX, -tY);
+    list[currentlySelected].matrix.setFrom(opMat);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -227,414 +357,347 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(
               height: MediaQuery.of(context).size.height * .8,
               child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraint) {
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (details) {
-                    tapX = details.globalPosition.dx - padLeft;
-                    tapY = details.globalPosition.dy - padTop;
+                builder: (BuildContext context, BoxConstraints constraint) {
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (details) {
+                      tapX = details.globalPosition.dx - padLeft;
+                      tapY = details.globalPosition.dy - padTop;
 
-                    lastX = tapX;
-                    lastY = tapY;
+                      lastX = tapX;
+                      lastY = tapY;
 
-                    // if an object is already selected and user taps outside the rectangle but within the bounds
-                    // of the circles which might be outside the rectangle we need to detect it
-                    // that's why the following block is used
-
-                    if (currentlySelected != -1) {
-                      ratio = list[currentlySelected].height /
-                          list[currentlySelected].width;
-                      idxOfSelectedCircle = getIdxOfCircle(tapX, tapY);
-                      downMat.setFrom(list[currentlySelected].matrix);
-
-                      if (idxOfSelectedCircle != -1) {
-                        if (idxOfSelectedCircle == 4) {
-                          flipHorizontally();
-                        } else if (idxOfSelectedCircle == 5) {
-                          flipVertically();
-                        }
-
-                        setState(() {
-                          list[currentlySelected]
-                              .curCircles[idxOfSelectedCircle]
-                              .second = 10;
-                        });
-                        return;
-                      }
-                    }
-
-                    idx = getIdx(tapX, tapY);
-
-                    // if not within the bound of any object
-
-                    if (idx == -1) {
-                      // if any object is selected we need to deselect it
+                      // if an object is already selected and user taps outside the rectangle but within the bounds
+                      // of the circles which might be outside the rectangle we need to detect it
+                      // that's why the following block is used
 
                       if (currentlySelected != -1) {
-                        setState(() {
-                          list[currentlySelected].selected = false;
-                        });
-                      }
-                      currentlySelected = -1;
-                    } else {
-                      bool shouldChangeState = false;
+                        ratio = list[currentlySelected].height / list[currentlySelected].width;
+                        idxOfSelectedCircle = getIdxOfCircle2(tapX, tapY);
+                        downMat.setFrom(list[currentlySelected].matrix);
 
-                      if (idx != currentlySelected) {
-                        shouldChangeState = true;
-                        currentlySelected = idx;
-                        list[currentlySelected].selected = true;
-                      }
+                        if (idxOfSelectedCircle != -1) {
+                          if (idxOfSelectedCircle == 4) {
+                            flipHorizontally();
+                          } else if (idxOfSelectedCircle == 5) {
+                            flipVertically();
+                          }
 
-                      ratio = list[currentlySelected].height /
-                          list[currentlySelected].width;
-                      downMat.setFrom(list[currentlySelected].matrix);
-
-                      idxOfSelectedCircle = getIdxOfCircle(tapX, tapY);
-
-                      if (idxOfSelectedCircle != -1) {
-                        shouldChangeState = true;
-                        list[currentlySelected]
-                            .curCircles[idxOfSelectedCircle]
-                            .second = 10;
-                      }
-                      if (shouldChangeState) {
-                        setState(() {});
-                      }
-                    }
-                  },
-                  onTapUp: (details) {
-                    tapX = tapY = -1;
-
-                    if (idxOfSelectedCircle != -1) {
-                      setState(() {
-                        list[currentlySelected]
-                            .curCircles[idxOfSelectedCircle]
-                            .second = 5;
-                      });
-                      idxOfSelectedCircle = -1;
-                    }
-                  },
-                  onTap: () {},
-                  onPanStart: (details) {
-                    if (tapX == -1 && tapY == -1) {
-                      lastX = details.globalPosition.dx - padLeft;
-                      lastY = details.globalPosition.dy - padTop;
-                    }
-
-                    // we'll perform operations on any object if and only if it is selected
-
-                    if (currentlySelected != -1) {
-                      idx = getIdx(lastX, lastY);
-
-                      // if user taps within the bound of rectangle it is enabled for dragging
-                      if (idx != -1) {
-                        dragging = true;
-                      }
-                      idxOfSelectedCircle = getIdxOfCircle(lastX, lastY);
-
-                      // if a circle is selected we need to select this object again. otherwise due to line 101
-                      // if the tap is outside rectangle the object will be deselected
-                      if (idxOfSelectedCircle != -1) {
-                        list[currentlySelected].selected = true;
+                          setState(() {
+                            list[currentlySelected].curCircles[idxOfSelectedCircle].second = 10;
+                          });
+                          return;
+                        }
                       }
 
-                      downMat.setFrom(list[currentlySelected].matrix);
+                      idx = getIdx2(tapX, tapY);
 
-                      // if it is being scaled for the first time, initialize variables
+                      // if not within the bound of any object
 
-                      if (list[currentlySelected].widthAfterScaling == -1 &&
-                          list[currentlySelected].heightAfterScaling == -1) {
-                        list[currentlySelected].widthAfterScaling =
-                            list[currentlySelected].width;
-                        list[currentlySelected].heightAfterScaling =
-                            list[currentlySelected].height;
-                      }
+                      if (idx == -1) {
+                        // if any object is selected we need to deselect it
 
-                      prWidth = list[currentlySelected].widthAfterScaling;
-                      prHeight = list[currentlySelected].heightAfterScaling;
+                        if (currentlySelected != -1) {
+                          setState(() {
+                            _currentSliderValue = 0;
+                            list[currentlySelected].selected = false;
+                          });
+                        }
+                        currentlySelected = -1;
+                      } else {
+                        bool shouldChangeState = false;
 
-                      if (idxOfSelectedCircle != -1) {
-                        setState(() {
-                          list[currentlySelected]
-                              .curCircles[idxOfSelectedCircle]
-                              .second = 10;
-                        });
-                      }
-                    }
-                  },
-                  onPanUpdate: (details) {
-                    double x = details.globalPosition.dx - padLeft;
-                    double y = details.globalPosition.dy - padTop;
-
-                    double dx = x - lastX;
-                    double dy = y - lastY;
-
-                    if (idxOfSelectedCircle >= 0 && idxOfSelectedCircle <= 3) {
-                      double scaleX = 1, scaleY = 1;
-
-                      int modifiedIdx = idxOfSelectedCircle;
-
-                      if (list[currentlySelected].isFlippedHorizontally &&
-                          list[currentlySelected].isFlippedVertically) {
-                        modifiedIdx = flippedBoth[idxOfSelectedCircle];
-                      } else if (list[currentlySelected]
-                          .isFlippedHorizontally) {
-                        modifiedIdx = flippedHor[idxOfSelectedCircle];
-                      } else if (list[currentlySelected].isFlippedVertically) {
-                        modifiedIdx = flippedVer[idxOfSelectedCircle];
-                      }
-
-                      if (maintainRatio) {
-                        double ddx = 0;
-
-                        if (modifiedIdx == 0) {
-                          ddx = (dx + dy) / 2;
-                        } else if (modifiedIdx == 1) {
-                          ddx = (-dx + dy) / 2;
-                        } else if (modifiedIdx == 2) {
-                          ddx = (dx - dy) / 2;
-                        } else {
-                          ddx = (-dx - dy) / 2;
+                        if (idx != currentlySelected) {
+                          shouldChangeState = true;
+                          print('idx = $idx  $currentlySelected slider = $_currentSliderValue');
+                          currentlySelected = idx;
+                          _currentSliderValue = list[currentlySelected].rotation;
+                          print('$currentlySelected  slider = $_currentSliderValue rotation = ${list[currentlySelected].rotation}');
+                          list[currentlySelected].selected = true;
                         }
 
-                        scaleX = (prWidth - ddx * 2) / prWidth;
-                        scaleY = (prHeight - ddx * ratio * 2) / prHeight;
-                      } else {}
+                        ratio = list[currentlySelected].height / list[currentlySelected].width;
+                        downMat.setFrom(list[currentlySelected].matrix);
 
-                      double nextWidthRect = prWidth * scaleX;
-                      double nextHeightRect = prHeight * scaleY;
+                        idxOfSelectedCircle = getIdxOfCircle2(tapX, tapY);
 
-                      if (nextWidthRect >= minWidth &&
-                          nextHeightRect >= minHeight) {
-                        double tX = (list[currentlySelected].width / 2),
-                            tY = (list[currentlySelected].height / 2);
+                        if (idxOfSelectedCircle != -1) {
+                          shouldChangeState = true;
+                          list[currentlySelected].curCircles[idxOfSelectedCircle].second = 10;
+                        }
+                        if (shouldChangeState) {
+                          setState(() {});
+                        }
+                      }
+                    },
+                    onTapUp: (details) {
+                      tapX = tapY = -1;
 
-                        // curScaleX = scaleX;
-                        // curScaleY = scaleY;
+                      if (idxOfSelectedCircle != -1) {
+                        setState(() {
+                          list[currentlySelected].curCircles[idxOfSelectedCircle].second = 5;
+                        });
+                        idxOfSelectedCircle = -1;
+                      }
+                    },
+                    onTap: () {},
+                    onPanStart: (details) {
+                      if (tapX == -1 && tapY == -1) {
+                        lastX = details.globalPosition.dx - padLeft;
+                        lastY = details.globalPosition.dy - padTop;
+                      }
 
-                        scale(scaleX, scaleY, tX, tY);
+                      // we'll perform operations on any object if and only if it is selected
 
-                        list[currentlySelected].widthAfterScaling =
-                            nextWidthRect;
-                        list[currentlySelected].heightAfterScaling =
-                            nextHeightRect;
-                        list[currentlySelected].scaleX =
-                            list[currentlySelected].widthAfterScaling /
-                                list[currentlySelected].width;
-                        list[currentlySelected].scaleY =
-                            list[currentlySelected].heightAfterScaling /
-                                list[currentlySelected].height;
+                      if (currentlySelected != -1) {
+                        idx = getIdx2(lastX, lastY);
 
+                        // if user taps within the bound of rectangle it is enabled for dragging
+                        if (idx != -1) {
+                          dragging = true;
+                        }
+                        idxOfSelectedCircle = getIdxOfCircle2(lastX, lastY);
+
+                        // if a circle is selected we need to select this object again. otherwise due to line 101
+                        // if the tap is outside rectangle the object will be deselected
+                        if (idxOfSelectedCircle != -1) {
+                          list[currentlySelected].selected = true;
+                        }
+
+                        downMat.setFrom(list[currentlySelected].matrix);
+
+                        // if it is being scaled for the first time, initialize variables
+
+                        if (list[currentlySelected].widthAfterScaling == -1 &&
+                            list[currentlySelected].heightAfterScaling == -1) {
+                          list[currentlySelected].widthAfterScaling =
+                              list[currentlySelected].width;
+                          list[currentlySelected].heightAfterScaling =
+                              list[currentlySelected].height;
+                        }
+
+                        prWidth = list[currentlySelected].widthAfterScaling;
+                        prHeight = list[currentlySelected].heightAfterScaling;
+
+                        if (idxOfSelectedCircle != -1) {
+                          setState(() {
+                            list[currentlySelected]
+                                .curCircles[idxOfSelectedCircle]
+                                .second = 10;
+                          });
+                        }
+                      }
+                    },
+                    onPanUpdate: (details) {
+                      double x = details.globalPosition.dx - padLeft;
+                      double y = details.globalPosition.dy - padTop;
+
+                      double dx = x - lastX;
+                      double dy = y - lastY;
+
+                      if (idxOfSelectedCircle >= 0 && idxOfSelectedCircle <= 3) {
+                        double scaleX = 1, scaleY = 1;
+
+                        int modifiedIdx = idxOfSelectedCircle;
+
+                        if (list[currentlySelected].isFlippedHorizontally &&
+                            list[currentlySelected].isFlippedVertically) {
+                          modifiedIdx = flippedBoth[idxOfSelectedCircle];
+                        } else if (list[currentlySelected]
+                            .isFlippedHorizontally) {
+                          modifiedIdx = flippedHor[idxOfSelectedCircle];
+                        } else if (list[currentlySelected].isFlippedVertically) {
+                          modifiedIdx = flippedVer[idxOfSelectedCircle];
+                        }
+
+                        if (maintainRatio) {
+                          double ddx = 0;
+
+                          if (modifiedIdx == 0) {
+                            ddx = (dx + dy) / 2;
+                          } else if (modifiedIdx == 1) {
+                            ddx = (-dx + dy) / 2;
+                          } else if (modifiedIdx == 2) {
+                            ddx = (dx - dy) / 2;
+                          } else {
+                            ddx = (-dx - dy) / 2;
+                          }
+
+                          scaleX = (prWidth - ddx * 2) / prWidth;
+                          scaleY = (prHeight - ddx * ratio * 2) / prHeight;
+                        } else {
+
+                        }
+
+                        double nextWidthRect = prWidth * scaleX;
+                        double nextHeightRect = prHeight * scaleY;
+
+                        if (nextWidthRect >= minWidth &&
+                            nextHeightRect >= minHeight) {
+                          double tX = (list[currentlySelected].width / 2),
+                              tY = (list[currentlySelected].height / 2);
+
+                          // curScaleX = scaleX;
+                          // curScaleY = scaleY;
+
+                          scale(scaleX, scaleY, tX, tY);
+
+                          list[currentlySelected].widthAfterScaling = nextWidthRect;
+                          list[currentlySelected].heightAfterScaling = nextHeightRect;
+                          list[currentlySelected].scaleX =
+                              list[currentlySelected].widthAfterScaling /
+                                  list[currentlySelected].width;
+                          list[currentlySelected].scaleY =
+                              list[currentlySelected].heightAfterScaling /
+                                  list[currentlySelected].height;
+
+                          setState(() {});
+                        }
+                      }
+
+                      if (dragging && idxOfSelectedCircle == -1) {
+                        //print('dx = $dx  dy = $dy  sx = ${list[currentlySelected].scaleX}  sy = ${list[currentlySelected].scaleY}');
+                        translate(
+                            dx / list[currentlySelected].scaleX * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
+                            dy / list[currentlySelected].scaleY * (list[currentlySelected].isFlippedVertically ? -1 : 1));
                         setState(() {});
                       }
-                    }
+                    },
+                    onPanEnd: (details) {
+                      dragging = false;
 
-                    if (dragging && idxOfSelectedCircle == -1) {
-                      print('dx = $dx  dy = $dy  sx = ${list[currentlySelected].scaleX}  sy = ${list[currentlySelected].scaleY}');
-                      translate(
-                          dx /
-                              list[currentlySelected].scaleX *
-                              (list[currentlySelected].isFlippedHorizontally
-                                  ? -1
-                                  : 1),
-                          dy /
-                              list[currentlySelected].scaleY *
-                              (list[currentlySelected].isFlippedVertically
-                                  ? -1
-                                  : 1));
+                      tapX = tapY = -1;
+
+                      if (idxOfSelectedCircle != -1) {
+                        setState(() {
+                          list[currentlySelected].curCircles[idxOfSelectedCircle].second = 5;
+                        });
+                        idxOfSelectedCircle = -1;
+                      }
+                    },
+
+                    onLongPress: () {
+                      currentlySelected = 0;
+                      list[currentlySelected].selected = true;
+                      if(curRotation == 0) {
+                        calculateMid();
+                      }
+                      rotate(degToRad(60), list[currentlySelected].width / 2,
+                          list[currentlySelected].height / 2);
+                      curRotation += 60;
                       setState(() {});
-                    }
-                  },
-                  onPanEnd: (details) {
-                    dragging = false;
+                    },
 
-                    tapX = tapY = -1;
-
-                    if (idxOfSelectedCircle != -1) {
-                      setState(() {
-                        list[currentlySelected]
-                            .curCircles[idxOfSelectedCircle]
-                            .second = 5;
-                      });
-                      idxOfSelectedCircle = -1;
-                    }
-                  },
-                  child: CustomPaint(
-                    painter: Painter(
-                      list: list,
+                    child: CustomPaint(
+                      painter: Painter(
+                        list: list,
+                      ),
+                      child: Container(),
                     ),
-                    child: Container(),
-                  ),
-                );
-              }),
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                    child: FloatingActionButton(
-                      onPressed: () {
-                        add();
-                      },
-                      child: const Icon(Icons.add),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            )
+            ),
+
+
+
+
+
+
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+              child: Slider(
+                onChanged: (double value) {
+                  if(currentlySelected != -1) {
+                    double rotation = value - _currentSliderValue;
+                    downMat.setFrom(list[currentlySelected].matrix);
+                    rotate(degToRad(rotation),
+                        list[currentlySelected].width / 2,
+                        list[currentlySelected].height / 2);
+                    _currentSliderValue = value;
+                    setState(() {});
+                  }
+                },
+                value: _currentSliderValue,
+                label: _currentSliderValue.round().toString(),
+                divisions: 360,
+                max: 359,
+              ),
+            ),
+            // Row(
+            //   children: [
+            //     Padding(
+            //       padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+            //       child: FloatingActionButton(
+            //         onPressed: () {
+            //           add();
+            //         },
+            //         child: const Icon(Icons.add),
+            //       ),
+            //     ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                        child: FloatingActionButton(
+                          onPressed: () {
+                            add();
+                          },
+                          child: const Icon(Icons.add),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                        child: TextButton(
+                          onPressed: () {
+                            if(currentlySelected != -1) {
+                              downMat.setFrom(list[currentlySelected].matrix);
+                              flipHorizontally();
+                              setState(() {});
+                            }
+                          },
+                          child: Center(
+                            child: Column(
+                              children: const [
+                                Text('Flip'),
+                                Text('Horizontally'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                        child: TextButton(
+                          onPressed: () {
+                            if(currentlySelected != -1) {
+                              downMat.setFrom(list[currentlySelected].matrix);
+                              flipVertically();
+                              setState(() {});
+                            }
+                          },
+                          child: Center(
+                            child: Column(
+                              children: const [
+                                Text('Flip'),
+                                Text('Vertically'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            //   ],
+            // ),
           ],
         ),
       ),
     );
   }
 }
-
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   double padTop = 0, padLeft = 0;
-//   double tapX = -1, tapY = -1;
-//   double lastX = -1, lastY = -1;
-//
-//   bool dragging = false;
-//   int id = -1;
-//
-//   final List<Offset> offset = [
-//     const Offset(5, 5), const Offset(150, 5),
-//     const Offset(5, 80), const Offset(150, 80),];
-//
-//   List<CanvasObject> list = [];
-//
-//   void add() {
-//     list.add(
-//       CanvasObject(
-//         canvasModel: CanvasModel(
-//           matrix: Matrix4.identity(),
-//           begin: offset[(idx++) % offset.length],
-//           selected: true,
-//           rotation: 0,
-//         ),
-//       ),
-//     );
-//     setState(() {});
-//   }
-//
-//   int getIdx(double x, double y) {
-//
-//     for(int i = 0; i < list.length; i++) {
-//       if(x >= list[i].canvasModel.begin.dx &&
-//          x <= list[i].canvasModel.begin.dx + list[i].canvasModel.width &&
-//          y >= list[i].canvasModel.begin.dy &&
-//          y <= list[i].canvasModel.begin.dy + list[i].canvasModel.height) {
-//         return i;
-//       }
-//     }
-//
-//     return -1;
-//   }
-//
-//   void translate(double tX, double tY) {
-//     opMat.setFrom(downMat);
-//     opMat.translate(tX, tY);
-//     list[id].canvasModel.matrix.setFrom(opMat);
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     padTop = MediaQuery.of(context).padding.top;
-//     padLeft = MediaQuery.of(context).padding.left;
-//
-//     return Scaffold(
-//       body: SafeArea(
-//         child: Column(
-//           children: [
-//             SizedBox(
-//               height: MediaQuery.of(context).size.height * .8,
-//               width: MediaQuery.of(context).size.width,
-//
-//               child: GestureDetector(
-//                 behavior: HitTestBehavior.opaque,
-//
-//                 onTapDown: (details) {
-//                   tapX = details.globalPosition.dx - padLeft;
-//                   tapY = details.globalPosition.dy - padTop;
-//
-//                   lastX = tapX;
-//                   lastY = tapY;
-//
-//                   id = getIdx(tapX, tapY);
-//
-//                   print('id = $id    tapx = $tapX  tapy = $tapY');
-//
-//                   if(id != -1) {
-//                     downMat.setFrom(list[id].canvasModel.matrix);
-//                   }
-//                 },
-//                 onTapUp: (details) {
-//                   tapX = tapY = -1;
-//                 },
-//                 onTap: () {
-//
-//                 },
-//
-//                 onPanStart: (details) {
-//                   if(tapX == -1 && tapY == -1) {
-//                     lastX = details.globalPosition.dx - padLeft;
-//                     lastY = details.globalPosition.dy - padTop;
-//                   }
-//                   id = getIdx(lastX, lastY);
-//                   dragging = id != -1;
-//
-//                   print('id = $id  dragging = $dragging');
-//
-//                   if(id != -1) {
-//                     downMat.setFrom(list[id].canvasModel.matrix);
-//                   }
-//                 },
-//                 onPanUpdate: (details) {
-//
-//                   double x = details.globalPosition.dx - padLeft;
-//                   double y = details.globalPosition.dy - padTop;
-//
-//                   double dx = x - lastX;
-//                   double dy = y - lastY;
-//
-//                   if(dragging) {
-//                     print('dx = $dx  dy = $dy');
-//                     translate(dx, dy);
-//                     setState(() {});
-//                   }
-//                 },
-//                 onPanEnd: (details) {
-//                   dragging = false;
-//
-//                   for(int i = 0; i < list.length; i++) {
-//                     print('i = $i   tx = ${list[i].canvasModel.matrix.getTranslation().x}  ty = ${list[i].canvasModel.matrix.getTranslation().y}');
-//                   }
-//                 },
-//
-//                 child: Column(
-//                   children: list,
-//                 ),
-//               ),
-//             ),
-//             Row(
-//               children: [
-//                 Padding(
-//                   padding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-//                   child: FloatingActionButton(
-//                     onPressed: () {
-//                       add();
-//                     },
-//                     child: const Icon(Icons.add),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
