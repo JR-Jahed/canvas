@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<CanvasModel> list = [];
 
-  double  _currentSliderValue = 0;
+  double  _curSliderValue = 0;
 
   void deselectAll() {
     for (int i = 0; i < list.length; i++) {
@@ -64,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void add() {
     deselectAll();
+    _curSliderValue = 0;
     currentlySelected = list.length;
     list.add(
       CanvasModel(
@@ -118,24 +119,26 @@ class _MyHomePageState extends State<MyHomePage> {
           : list[i].heightAfterScaling);
 
       double beginX = list[i].begin.dx +
-          list[i].matrix.getTranslation().x +
-          curWidth * (list[i].isFlippedHorizontally ? -1 : 0);
+          list[i].matrix.getTranslation().x;
       double beginY = list[i].begin.dy +
-          list[i].matrix.getTranslation().y +
-          curHeight * (list[i].isFlippedVertically ? -1 : 0);
+          list[i].matrix.getTranslation().y;
 
-      Pair<double, double> p = unrotated(beginX, beginY);
+      calculateMid(i);
+      Pair<double, double> p = unrotated(beginX, beginY, list[i].rotation);
       beginX = p.first;
       beginY = p.second;
+
+      beginX += curWidth * (list[i].isFlippedHorizontally ? -1 : 0);
+      beginY += curHeight * (list[i].isFlippedVertically ? -1 : 0);
 
       double endX = beginX + curWidth;
       double endY = beginY + curHeight;
 
-      p = unrotated(x, y);
-      x = p.first;
-      y = p.second;
+      p = unrotated(x, y, list[i].rotation);
+      double newX = p.first;
+      double newY = p.second;
 
-      if (x >= beginX && x <= endX && y >= beginY && y <= endY && ans == -1) {
+      if (newX >= beginX && newX <= endX && newY >= beginY && newY <= endY && ans == -1) {
         ans = i;
       } else {
         // following line deselects an object if the user tapped outside it
@@ -238,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
         list[currentlySelected].matrix.getTranslation().x,
         list[currentlySelected].matrix.getTranslation().y); // no change for flip
 
-    Pair<double, double> p = unrotated(upperLeft.dx, upperLeft.dy);
+    Pair<double, double> p = unrotated(upperLeft.dx, upperLeft.dy, list[currentlySelected].rotation);
     upperLeft = Offset(p.first, p.second);
     tmp.add(upperLeft);
 
@@ -267,17 +270,17 @@ class _MyHomePageState extends State<MyHomePage> {
     //     upperLeft.dy + curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
 
     //print('x = $x  y = $y');
-    p = unrotated(x, y);
-    x = p.first;
-    y = p.second;
+    p = unrotated(x, y, list[currentlySelected].rotation);
+    double newX = p.first;
+    double newY = p.second;
     //print('x = $x  y = $y');
 
     for (int i = 0; i < tmp.length; i++) {
       final o = tmp[i];
-      if (x >= o.dx - 20 &&
-          x <= o.dx + 20 &&
-          y >= o.dy - 20 &&
-          y <= o.dy + 20) {
+      if (newX >= o.dx - 20 &&
+          newX <= o.dx + 20 &&
+          newY >= o.dy - 20 &&
+          newY <= o.dy + 20) {
         return i;
       }
     }
@@ -287,36 +290,84 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void translate(double tX, double tY) {
     opMat.setFrom(downMat);
+
+    opMat.rotateZ(degToRad(-list[currentlySelected].rotation * (list[currentlySelected].isFlippedHorizontally ? -1 : 1)
+        * (list[currentlySelected].isFlippedVertically ? -1 : 1)));
     opMat.translate(tX, tY);
+    opMat.rotateZ(degToRad(list[currentlySelected].rotation * (list[currentlySelected].isFlippedHorizontally ? -1 : 1)
+        * (list[currentlySelected].isFlippedVertically ? -1 : 1)));
+
     list[currentlySelected].matrix.setFrom(opMat);
   }
 
   void scale(double scaleX, double scaleY, double tX, double tY) {
     opMat.setFrom(downMat);
     opMat.translate(tX, tY);
-    opMat.scale(scaleX, scaleY);
+    opMat.scale(scaleX, scaleY, 1);
     opMat.translate(-tX, -tY);
     list[currentlySelected].matrix.setFrom(opMat);
   }
 
   void flipHorizontally() {
-    list[currentlySelected].isFlippedHorizontally ^= true;
+
     opMat.setFrom(downMat);
     opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+
+    double r;
+
+    if(list[currentlySelected].isFlippedHorizontally) {
+      r = list[currentlySelected].rotation;
+    }
+    else {
+      r = -list[currentlySelected].rotation;
+    }
+
+    opMat.rotateZ(degToRad(r));
     opMat.storage[0] *= -1;
+
+    if(list[currentlySelected].isFlippedHorizontally) {
+      r = list[currentlySelected].rotation;
+    }
+    else {
+      r = -list[currentlySelected].rotation;
+    }
+
+    opMat.rotateZ(degToRad(r));
+    list[currentlySelected].isFlippedHorizontally ^= true;
+
     opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
     list[currentlySelected].matrix.setFrom(opMat);
   }
 
   void flipVertically() {
-    list[currentlySelected].isFlippedVertically ^= true;
+
     opMat.setFrom(downMat);
     opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+
+    double r;
+
+    if(list[currentlySelected].isFlippedVertically) {
+      r = list[currentlySelected].rotation;
+    }
+    else {
+      r = -list[currentlySelected].rotation;
+    }
+
+    opMat.rotateZ(degToRad(r));
     opMat.storage[5] *= -1;
+    if(list[currentlySelected].isFlippedVertically) {
+      r = list[currentlySelected].rotation;
+    }
+    else {
+      r = -list[currentlySelected].rotation;
+    }
+
+    opMat.rotateZ(degToRad(r));
+    list[currentlySelected].isFlippedVertically ^= true;
+
     opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
     list[currentlySelected].matrix.setFrom(opMat);
   }
-
 
   double curRotation = 0, midX = 0, midY = 0;
   double degToRad(double deg) {
@@ -325,18 +376,17 @@ class _MyHomePageState extends State<MyHomePage> {
   double radToDeg(double rad) {
     return rad * 180 / pi;
   }
-  void calculateMid() {
-    midX = list[currentlySelected].matrix.getTranslation().x + list[currentlySelected].width / 2;
-    midY = list[currentlySelected].matrix.getTranslation().y + list[currentlySelected].height / 2;
+  void calculateMid(int _idx) {
+    midX = list[_idx].matrix.getTranslation().x + list[_idx].width / 2;
+    midY = list[_idx].matrix.getTranslation().y + list[_idx].height / 2;
   }
-  Pair<double, double> unrotated(double x, double y) {
-    double xx = (x - midX) * cos(degToRad(curRotation)) - (midY - y) * sin(degToRad(curRotation)) + midX;
-    double yy = (midX - x) * sin(degToRad(curRotation)) + (y - midY) * cos(degToRad(curRotation)) + midY;
+  Pair<double, double> unrotated(double x, double y, double r) {
+    double newX = (x - midX) * cos(degToRad(r)) - (midY - y) * sin(degToRad(r)) + midX;
+    double newY = (midX - x) * sin(degToRad(r)) + (y - midY) * cos(degToRad(r)) + midY;
 
-    return Pair(first: xx, second: yy);
+    return Pair(first: newX, second: newY);
   }
   void rotate(double r, double tX, double tY) {
-    list[currentlySelected].rotation += radToDeg(r);
     opMat.setFrom(downMat);
     opMat.translate(tX, tY);
     opMat.rotateZ(r);
@@ -355,7 +405,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: [
             SizedBox(
-              height: MediaQuery.of(context).size.height * .8,
+              height: MediaQuery.of(context).size.height * .78,
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraint) {
                   return GestureDetector(
@@ -399,7 +449,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         if (currentlySelected != -1) {
                           setState(() {
-                            _currentSliderValue = 0;
+                            _curSliderValue = 0;
                             list[currentlySelected].selected = false;
                           });
                         }
@@ -409,10 +459,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         if (idx != currentlySelected) {
                           shouldChangeState = true;
-                          print('idx = $idx  $currentlySelected slider = $_currentSliderValue');
                           currentlySelected = idx;
-                          _currentSliderValue = list[currentlySelected].rotation;
-                          print('$currentlySelected  slider = $_currentSliderValue rotation = ${list[currentlySelected].rotation}');
+                          _curSliderValue = list[currentlySelected].rotation;
+                          _curSliderValue = max(_curSliderValue, 0);
+                          _curSliderValue = min(_curSliderValue, 360);
                           list[currentlySelected].selected = true;
                         }
 
@@ -537,19 +587,13 @@ class _MyHomePageState extends State<MyHomePage> {
                           double tX = (list[currentlySelected].width / 2),
                               tY = (list[currentlySelected].height / 2);
 
-                          // curScaleX = scaleX;
-                          // curScaleY = scaleY;
-
                           scale(scaleX, scaleY, tX, tY);
 
                           list[currentlySelected].widthAfterScaling = nextWidthRect;
                           list[currentlySelected].heightAfterScaling = nextHeightRect;
-                          list[currentlySelected].scaleX =
-                              list[currentlySelected].widthAfterScaling /
-                                  list[currentlySelected].width;
-                          list[currentlySelected].scaleY =
-                              list[currentlySelected].heightAfterScaling /
-                                  list[currentlySelected].height;
+
+                          list[currentlySelected].scaleX = list[currentlySelected].widthAfterScaling / list[currentlySelected].width;
+                          list[currentlySelected].scaleY = list[currentlySelected].heightAfterScaling / list[currentlySelected].height;
 
                           setState(() {});
                         }
@@ -576,18 +620,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     },
 
-                    onLongPress: () {
-                      currentlySelected = 0;
-                      list[currentlySelected].selected = true;
-                      if(curRotation == 0) {
-                        calculateMid();
-                      }
-                      rotate(degToRad(60), list[currentlySelected].width / 2,
-                          list[currentlySelected].height / 2);
-                      curRotation += 60;
-                      setState(() {});
-                    },
-
                     child: CustomPaint(
                       painter: Painter(
                         list: list,
@@ -610,19 +642,21 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Slider(
                 onChanged: (double value) {
                   if(currentlySelected != -1) {
-                    double rotation = value - _currentSliderValue;
+                    double rotation = value - _curSliderValue;
                     downMat.setFrom(list[currentlySelected].matrix);
-                    rotate(degToRad(rotation),
+                    list[currentlySelected].rotation += rotation;
+                    rotate(degToRad(rotation) * (list[currentlySelected].isFlippedHorizontally ? -1 : 1)
+                        * (list[currentlySelected].isFlippedVertically ? -1 : 1),
                         list[currentlySelected].width / 2,
                         list[currentlySelected].height / 2);
-                    _currentSliderValue = value;
+                    _curSliderValue = value;
                     setState(() {});
                   }
                 },
-                value: _currentSliderValue,
-                label: _currentSliderValue.round().toString(),
-                divisions: 360,
-                max: 359,
+                value: _curSliderValue,
+                label: _curSliderValue.round().toString(),
+                divisions: 361,
+                max: 360,
               ),
             ),
             // Row(
@@ -685,6 +719,25 @@ class _MyHomePageState extends State<MyHomePage> {
                               children: const [
                                 Text('Flip'),
                                 Text('Vertically'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                        child: TextButton(
+                          onPressed: () {
+                            if(currentlySelected != -1) {
+                              print(list[currentlySelected].rotation);
+                            }
+                          },
+                          child: Center(
+                            child: Column(
+                              children: const [
+                                Text('Current'),
+                                Text('Rotation'),
                               ],
                             ),
                           ),
