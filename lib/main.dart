@@ -76,38 +76,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
     setState(() {});
   }
-
+  
   int getIdx(double x, double y) {
-    int ans = -1;
-
-    for (int i = 0; i < list.length; i++) {
-      double curWidth = (list[i].widthAfterScaling < 0
-          ? list[i].width
-          : list[i].widthAfterScaling);
-      double curHeight = (list[i].heightAfterScaling < 0
-          ? list[i].height
-          : list[i].heightAfterScaling);
-
-      double beginX = list[i].begin.dx +
-          list[i].matrix.getTranslation().x +
-          curWidth * (list[i].isFlippedHorizontally ? -1 : 0);
-      double beginY = list[i].begin.dy +
-          list[i].matrix.getTranslation().y +
-          curHeight * (list[i].isFlippedVertically ? -1 : 0);
-      double endX = beginX + curWidth;
-      double endY = beginY + curHeight;
-
-      if (x >= beginX && x <= endX && y >= beginY && y <= endY && ans == -1) {
-        ans = i;
-      } else {
-        // following line deselects an object if the user tapped outside it
-        list[i].selected = false;
-      }
-    }
-
-    return ans;
-  }
-  int getIdx2(double x, double y) {
     int ans = -1;
 
     for (int i = 0; i < list.length; i++) {
@@ -161,82 +131,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<Offset> tmp = [];
 
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x,
-        list[currentlySelected]
-            .matrix
-            .getTranslation()
-            .y)); // no change for flip
-
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x +
-            curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
-        list[currentlySelected]
-            .matrix
-            .getTranslation()
-            .y)); // change if flipped hor
-
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x,
-        list[currentlySelected].matrix.getTranslation().y +
-            curHeight *
-                (list[currentlySelected].isFlippedVertically
-                    ? -1
-                    : 1))); // change if flipped ver
-
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x +
-            curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
-        list[currentlySelected].matrix.getTranslation().y +
-            curHeight *
-                (list[currentlySelected].isFlippedVertically
-                    ? -1
-                    : 1))); // change for both direction
-
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x,
-        list[currentlySelected].matrix.getTranslation().y +
-            curHeight *
-                2 *
-                (list[currentlySelected].isFlippedVertically
-                    ? -1
-                    : 1))); // change for both direction
-
-    tmp.add(Offset(
-        list[currentlySelected].matrix.getTranslation().x +
-            curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
-        list[currentlySelected].matrix.getTranslation().y +
-            curHeight *
-                2 *
-                (list[currentlySelected].isFlippedVertically
-                    ? -1
-                    : 1))); // change for both direction
-
-    for (int i = 0; i < tmp.length; i++) {
-      final o = tmp[i];
-      if (x >= o.dx - 20 &&
-          x <= o.dx + 20 &&
-          y >= o.dy - 20 &&
-          y <= o.dy + 20) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  int getIdxOfCircle2(double x, double y) {
-    if (currentlySelected == -1) return -1;
-
-    double curWidth = (list[currentlySelected].widthAfterScaling < 0
-        ? list[currentlySelected].width
-        : list[currentlySelected].widthAfterScaling);
-    double curHeight = (list[currentlySelected].heightAfterScaling < 0
-        ? list[currentlySelected].height
-        : list[currentlySelected].heightAfterScaling);
-
-    List<Offset> tmp = [];
-
     Offset upperLeft = Offset(
         list[currentlySelected].matrix.getTranslation().x,
         list[currentlySelected].matrix.getTranslation().y); // no change for flip
@@ -260,14 +154,8 @@ class _MyHomePageState extends State<MyHomePage> {
         upperLeft.dy +
             curHeight * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
 
-    // tmp.add(Offset(
-    //     upperLeft.dx,
-    //     upperLeft.dy +
-    //         curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
-    //
-    // tmp.add(Offset(
-    //     upperLeft.dx + curWidth * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
-    //     upperLeft.dy + curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1))); // change for both direction
+    tmp.add(Offset(upperLeft.dx + curWidth / 2 * (list[currentlySelected].isFlippedHorizontally ? -1 : 1),
+                   upperLeft.dy + curHeight * 2 * (list[currentlySelected].isFlippedVertically ? -1 : 1)));
 
     //print('x = $x  y = $y');
     p = unrotated(x, y, list[currentlySelected].rotation);
@@ -423,16 +311,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
                       if (currentlySelected != -1) {
                         ratio = list[currentlySelected].height / list[currentlySelected].width;
-                        idxOfSelectedCircle = getIdxOfCircle2(tapX, tapY);
+                        idxOfSelectedCircle = getIdxOfCircle(tapX, tapY);
                         downMat.setFrom(list[currentlySelected].matrix);
 
                         if (idxOfSelectedCircle != -1) {
                           if (idxOfSelectedCircle == 4) {
-                            flipHorizontally();
-                          } else if (idxOfSelectedCircle == 5) {
-                            flipVertically();
-                          }
 
+                          }
                           setState(() {
                             list[currentlySelected].curCircles[idxOfSelectedCircle].second = 10;
                           });
@@ -440,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       }
 
-                      idx = getIdx2(tapX, tapY);
+                      idx = getIdx(tapX, tapY);
 
                       // if not within the bound of any object
 
@@ -469,7 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ratio = list[currentlySelected].height / list[currentlySelected].width;
                         downMat.setFrom(list[currentlySelected].matrix);
 
-                        idxOfSelectedCircle = getIdxOfCircle2(tapX, tapY);
+                        idxOfSelectedCircle = getIdxOfCircle(tapX, tapY);
 
                         if (idxOfSelectedCircle != -1) {
                           shouldChangeState = true;
@@ -500,13 +385,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       // we'll perform operations on any object if and only if it is selected
 
                       if (currentlySelected != -1) {
-                        idx = getIdx2(lastX, lastY);
+                        idx = getIdx(lastX, lastY);
 
                         // if user taps within the bound of rectangle it is enabled for dragging
                         if (idx != -1) {
                           dragging = true;
                         }
-                        idxOfSelectedCircle = getIdxOfCircle2(lastX, lastY);
+                        idxOfSelectedCircle = getIdxOfCircle(lastX, lastY);
 
                         // if a circle is selected we need to select this object again. otherwise due to line 101
                         // if the tap is outside rectangle the object will be deselected
@@ -548,16 +433,31 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (idxOfSelectedCircle >= 0 && idxOfSelectedCircle <= 3) {
                         double scaleX = 1, scaleY = 1;
 
-                        int modifiedIdx = idxOfSelectedCircle;
+                        int newIdx = idxOfSelectedCircle;
 
-                        if (list[currentlySelected].isFlippedHorizontally &&
-                            list[currentlySelected].isFlippedVertically) {
-                          modifiedIdx = flippedBoth[idxOfSelectedCircle];
-                        } else if (list[currentlySelected]
-                            .isFlippedHorizontally) {
-                          modifiedIdx = flippedHor[idxOfSelectedCircle];
-                        } else if (list[currentlySelected].isFlippedVertically) {
-                          modifiedIdx = flippedVer[idxOfSelectedCircle];
+                        // it doesn't work if the object is flipped
+                        // but if icons are not flipped along with the text this problem will go away
+
+                        if(list[currentlySelected].rotation > 45 && list[currentlySelected].rotation <= 135) {
+                          newIdx = rotate1[idxOfSelectedCircle];
+                        }
+                        else if(list[currentlySelected].rotation > 135 && list[currentlySelected].rotation <= 225) {
+                          newIdx = rotate2[idxOfSelectedCircle];
+                        }
+                        else if(list[currentlySelected].rotation > 225 && list[currentlySelected].rotation <= 315) {
+                          newIdx = rotate3[idxOfSelectedCircle];
+                        }
+
+                        int modifiedIdx = newIdx;
+
+                        if (list[currentlySelected].isFlippedHorizontally && list[currentlySelected].isFlippedVertically) {
+                          modifiedIdx = flippedBoth[newIdx];
+                        }
+                        else if (list[currentlySelected].isFlippedHorizontally) {
+                          modifiedIdx = flippedHor[newIdx];
+                        }
+                        else if (list[currentlySelected].isFlippedVertically) {
+                          modifiedIdx = flippedVer[newIdx];
                         }
 
                         if (maintainRatio) {
@@ -565,25 +465,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
                           if (modifiedIdx == 0) {
                             ddx = (dx + dy) / 2;
-                          } else if (modifiedIdx == 1) {
+                          }
+                          else if (modifiedIdx == 1) {
                             ddx = (-dx + dy) / 2;
-                          } else if (modifiedIdx == 2) {
+                          }
+                          else if (modifiedIdx == 2) {
                             ddx = (dx - dy) / 2;
-                          } else {
+                          }
+                          else {
                             ddx = (-dx - dy) / 2;
                           }
 
                           scaleX = (prWidth - ddx * 2) / prWidth;
                           scaleY = (prHeight - ddx * ratio * 2) / prHeight;
-                        } else {
+                        }
+                        else {
 
                         }
 
                         double nextWidthRect = prWidth * scaleX;
                         double nextHeightRect = prHeight * scaleY;
 
-                        if (nextWidthRect >= minWidth &&
-                            nextHeightRect >= minHeight) {
+                        if (nextWidthRect >= minWidth && nextHeightRect >= minHeight) {
                           double tX = (list[currentlySelected].width / 2),
                               tY = (list[currentlySelected].height / 2);
 
@@ -719,6 +622,27 @@ class _MyHomePageState extends State<MyHomePage> {
                               children: const [
                                 Text('Flip'),
                                 Text('Vertically'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                        child: TextButton(
+                          onPressed: () {
+                            if(currentlySelected != -1) {
+                              list.removeAt(currentlySelected);
+                              setState(() {
+                                currentlySelected = -1;
+                              });
+                            }
+                          },
+                          child: Center(
+                            child: Column(
+                              children: const [
+                                Text('Delete'),
                               ],
                             ),
                           ),

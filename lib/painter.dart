@@ -51,6 +51,9 @@ class Painter extends CustomPainter {
                 list[i].curCircles[j].first, list[i].curCircles[j].second,
                 paintRed);
           }
+          else {
+            canvas.drawCircle(list[i].curCircles[j].first, list[i].curCircles[j].second, paintGreen);
+          }
         }
       }
       canvas.restore();
@@ -69,5 +72,8 @@ class Painter extends CustomPainter {
 
     list[i].curCircles.add(Pair(first: Offset(list[i].begin.dx + list[i].width,
         list[i].begin.dy + list[i].height), second: 5));
+
+    list[i].curCircles.add(Pair(first: Offset(list[i].begin.dx + list[i].width / 2,
+        list[i].begin.dy + list[i].height * 2), second: 5));
   }
 }
