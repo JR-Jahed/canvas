@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class CanvasModel {
   Matrix4 matrix;
+  Matrix4 matrixFrame;
   bool selected;
   Offset begin;
 
@@ -13,14 +14,17 @@ class CanvasModel {
   double height;
   double widthAfterScaling;
   double heightAfterScaling;
+  double midX;
+  double midY;
 
   bool isFlippedHorizontally;
   bool isFlippedVertically;
 
   List<Pair<Offset, double>> curCircles;
 
-  CanvasModel( {
+  CanvasModel({
     required this.matrix,
+    required this.matrixFrame,
     required this.selected,
     required this.begin,
     this.scaleX = 1,
@@ -31,6 +35,8 @@ class CanvasModel {
     this.height = 0,
     this.widthAfterScaling = -1,
     this.heightAfterScaling = -1,
+    this.midX = -1,
+    this.midY = -1,
     this.isFlippedHorizontally = false,
     this.isFlippedVertically = false,
   });

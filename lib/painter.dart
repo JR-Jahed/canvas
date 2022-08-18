@@ -38,6 +38,9 @@ class Painter extends CustomPainter {
       textPainter.paint(canvas, Offset(list[i].begin.dx + 5, list[i].begin.dy + 5));
 
       if(list[i].selected) {
+        canvas.restore();
+        canvas.save();
+        canvas.transform(list[i].matrixFrame.storage);
         canvas.drawRect(Rect.fromLTWH(list[i].begin.dx, list[i].begin.dy, textPainter.width + 10, textPainter.height + 10), paintObject);
 
         // we should add to list only when an object gets painted for the first time
