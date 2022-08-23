@@ -1,8 +1,9 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:canvas_object/pair.dart';
+import 'package:canvas_object/text.dart';
 import 'package:flutter/material.dart';
 import 'canvas_model.dart';
+import 'values.dart';
 
 
 // this function deselects all the objects. there should be only one selected object at any given moment
@@ -30,6 +31,26 @@ int add(List<CanvasModel> list) {
   return list.length - 1;
 }
 
+int addText(List<CanvasModel> list, String s, double width) {
+  deselectAll(list);
+  final textPainter = getTextPainter(s, width);
+
+  list.add(TextModel(
+    textPainter: textPainter,
+    matrix: Matrix4.identity(),
+    matrixFrame: Matrix4.identity(),
+    begin: const Offset(0, 0),
+    selected: true,
+    rotation: 0,
+    curCircles: [],
+    width: textPainter.width + 10,
+    height: textPainter.height + 10,
+    widthAfterScaling: textPainter.width + 10,
+    heightAfterScaling: textPainter.height + 10,
+  ));
+
+  return list.length - 1;
+}
 
 // this function returns the index of the object if the user tapped on it and -1 if the user tapped inside no object
 
@@ -37,12 +58,8 @@ int getIdx(double x, double y, List<CanvasModel> list) {
   int ans = -1;
 
   for (int i = 0; i < list.length; i++) {
-    double curWidth = (list[i].widthAfterScaling < 0
-        ? list[i].width
-        : list[i].widthAfterScaling);
-    double curHeight = (list[i].heightAfterScaling < 0
-        ? list[i].height
-        : list[i].heightAfterScaling);
+    double curWidth = list[i].widthAfterScaling;
+    double curHeight = list[i].heightAfterScaling;
 
     double beginX = list[i].begin.dx + list[i].matrixFrame.getTranslation().x;
     double beginY = list[i].begin.dy + list[i].matrixFrame.getTranslation().y;
@@ -76,12 +93,8 @@ int getIdx(double x, double y, List<CanvasModel> list) {
 int getIdxOfCircle(double x, double y, List<CanvasModel> list, int currentlySelected) {
   if (currentlySelected == -1) return -1;
 
-  double curWidth = (list[currentlySelected].widthAfterScaling < 0
-      ? list[currentlySelected].width
-      : list[currentlySelected].widthAfterScaling);
-  double curHeight = (list[currentlySelected].heightAfterScaling < 0
-      ? list[currentlySelected].height
-      : list[currentlySelected].heightAfterScaling);
+  double curWidth = list[currentlySelected].widthAfterScaling;
+  double curHeight = list[currentlySelected].heightAfterScaling;
 
   List<Offset> tmp = [];
 
@@ -99,7 +112,7 @@ int getIdxOfCircle(double x, double y, List<CanvasModel> list, int currentlySele
 
   tmp.add(Offset(upperLeft.dx + curWidth, upperLeft.dy + curHeight));
 
-  tmp.add(Offset(upperLeft.dx + curWidth / 2, upperLeft.dy + curHeight * 2));
+  tmp.add(Offset(upperLeft.dx + curWidth / 2, upperLeft.dy + curHeight + 50 * list[currentlySelected].scaleY));
 
   //print('x = $x  y = $y');
   p = unrotated(x, y, list[currentlySelected]);
@@ -137,3 +150,99 @@ Pair<double, double> unrotated(double x, double y, CanvasModel ob) {
 
   return Pair(first: newX, second: newY);
 }
+
+
+// TextPainter getTextPainter(String s, double width, {double fontSize = defaultFontSize}) {
+//   final textPainter = TextPainter(
+//     text: TextSpan(
+//       text: s,
+//       style: TextStyle(
+//         color: Colors.black,
+//         fontSize: fontSize,
+//       ),
+//     ),
+//     //textAlign: TextAlign.center,
+//     textDirection: TextDirection.ltr,
+//     maxLines: 5555,
+//   );
+//
+//   textPainter.layout(maxWidth: width);
+//
+//   return textPainter;
+// }
+
+
+
+TextPainter getTextPainter(String s, double width, {double fontSize = defaultFontSize}) {
+
+  String t = "";
+  String cur = "";
+
+  for(int i = 0; i < s.length; i++) {
+    cur += s[i];
+
+    if(!getTextPainter2(cur, width, fontSize: fontSize)) {
+      t += "\n";
+      cur = s[i];
+      print(i);
+    }
+    t += s[i];
+  }
+  print('$width   $t');
+
+
+
+
+  final textPainter = TextPainter(
+    text: TextSpan(
+      text: t,
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: fontSize,
+      ),
+    ),
+    //textAlign: TextAlign.center,
+    textDirection: TextDirection.ltr,
+    maxLines: 5555,
+  );
+
+  textPainter.layout(maxWidth: width);
+
+  return textPainter;
+}
+
+
+bool getTextPainter2(String s, double width, {double fontSize = defaultFontSize}) {
+  final textPainter = TextPainter(
+    text: TextSpan(
+      text: s,
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: fontSize,
+      ),
+    ),
+    //textAlign: TextAlign.center,
+    textDirection: TextDirection.ltr,
+    maxLines: 5555,
+  );
+
+  textPainter.layout(maxWidth: 3000);
+
+  return textPainter.width <= width;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
