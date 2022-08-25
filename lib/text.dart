@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class TextModel extends CanvasModel {
 
+  String originalText;
   TextPainter textPainter;
   bool shouldDrawText;
   SizedBox box;
@@ -15,12 +16,13 @@ class TextModel extends CanvasModel {
       required super.rotation,
       required super.curCircles,
       super.width,
-        super.height,
-        super.widthAfterScaling,
-        super.heightAfterScaling,
-        super.midX,
-        super.midY,
+      super.height,
+      super.widthAfterScaling,
+      super.heightAfterScaling,
+      super.midX,
+      super.midY,
 
+      required this.originalText,
       required this.textPainter,
       this.shouldDrawText = true,
       this.box = const SizedBox(),

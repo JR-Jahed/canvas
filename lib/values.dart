@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 const int minWidth = 40;
 const int minHeight = 20;
 const double defaultFontSize = 30;
+const double defaultLetterSpacing = 1;
 
 const List<int> rotate1 = [1, 3, 0, 2]; //   45  < rotation < 135
 const List<int> rotate2 = [3, 2, 1, 0]; //   135 < rotation < 225

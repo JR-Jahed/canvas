@@ -64,8 +64,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _dialogTextFieldController = TextEditingController();
   }
 
-  //  I made textPainter an instance variable so that I can assign maxLine of TextField dynamically at runtime
-
   void recalculate() {
     list[currentlySelected].width = (list[currentlySelected] as TextModel).textPainter.width + 10;
     list[currentlySelected].height = (list[currentlySelected] as TextModel).textPainter.height + 10;
@@ -73,17 +71,11 @@ class _MyHomePageState extends State<MyHomePage> {
     list[currentlySelected].heightAfterScaling = list[currentlySelected].height * list[currentlySelected].scaleY;
   }
 
-  int calculateMaxLine(String s, double fontSize) {
-
-    final textPainter = getTextPainter(s, 3000, fontSize: fontSize);
-
-    for(int i = 1; ; i++) {
-      //print('tpw = ${textPainter.width}   i = $i   ${(screenWidth - list[currentlySelected].matrix.getTranslation().x) * i}');
-      if(textPainter.width <= (screenWidth - list[currentlySelected].matrix.getTranslation().x) * i) return i;
-    }
-  }
+  int getMaxLine(final TextPainter textPainter) => textPainter.computeLineMetrics().length;
 
   SizedBox getBox(double width, double height, double letterSpacing, double fontSize, int curMaxLine) {
+
+    print('maxline = $curMaxLine');
 
     return SizedBox(
       width: max(0, width),
@@ -99,32 +91,29 @@ class _MyHomePageState extends State<MyHomePage> {
           fontSize: fontSize,
         ),
         maxLines: curMaxLine,
+        textAlign: TextAlign.justify,
         decoration: const InputDecoration(
           border: InputBorder.none,
         ),
         onChanged: (text) {
+          
+          final textPainter = getTextPainter(text,
+              (screenWidth - list[currentlySelected].matrix.getTranslation().x - 10) / list[currentlySelected].scaleX,
+              fontSize: ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).style!.fontSize!);
 
-          int maxLine = calculateMaxLine("${text}W", ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).style!.fontSize!);
-
-          // if(maxLine > curMaxLine) {
-          //   text += '\n';
-          //   // _dialogTextFieldController.text = text;
-          // }
+          int maxLine = max(1, getMaxLine(textPainter));
 
           setState(() {
             list[currentlySelected].curCircles.clear();
+            (list[currentlySelected] as TextModel).originalText = text;
             (list[currentlySelected] as TextModel).textPainter = getTextPainter(text,
-                (screenWidth - list[currentlySelected].matrix.getTranslation().x) / list[currentlySelected].scaleX);
+                (screenWidth - list[currentlySelected].matrix.getTranslation().x - 10) / list[currentlySelected].scaleX);
+
             recalculate();
-
-            // if(list[currentlySelected].matrix.getTranslation().x +  > screenWidth) {
-            //
-            // }
-
           });
           (list[currentlySelected] as TextModel).box =
-              getBox(list[currentlySelected].widthAfterScaling,
-                  list[currentlySelected].heightAfterScaling, 2, fontSize, maxLine);
+              getBox(list[currentlySelected].widthAfterScaling - 10,
+                  list[currentlySelected].heightAfterScaling + 20, 2, fontSize, maxLine);
         },
       ),
     );
@@ -189,9 +178,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               else {
                                 activateTextField = false;
                                 setState(() {
-                                  // (list[currentlySelected] as TextModel).textPainter =
-                                      // getTextPainter(_dialogTextFieldController.text,
-                                      //     (screenWidth - list[currentlySelected].matrix.getTranslation().x) / list[currentlySelected].scaleX);
                                   (list[currentlySelected] as TextModel).shouldDrawText = true;
                                   (list[currentlySelected] as TextModel).box = const SizedBox();
                                 });
@@ -270,13 +256,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                 double fontSize =
                                     ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).style!.fontSize!
-                                        * list[currentlySelected].scaleX * (list[currentlySelected].scaleX <= 1 ? .83 : .85);
+                                        * list[currentlySelected].scaleX * (list[currentlySelected].scaleX < 1 ? .83 : 1);
 
-                                int maxLine = calculateMaxLine(_dialogTextFieldController.text, fontSize);
+                                int maxLine = getMaxLine((list[currentlySelected] as TextModel).textPainter);
 
                                 (list[currentlySelected] as TextModel).box = getBox(
-                                  list[currentlySelected].widthAfterScaling - 10,
-                                  list[currentlySelected].heightAfterScaling,
+                                  list[currentlySelected].widthAfterScaling,
+                                  list[currentlySelected].heightAfterScaling + 20,
                                   2,
                                   fontSize,
                                   maxLine,
@@ -462,177 +448,157 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                          currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().x + 5 * list[currentlySelected].scaleX * 1.2),
-                          //currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().y/* + 5 * list[currentlySelected].scaleY*/),
+                          currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().x + 5 * list[currentlySelected].scaleX),
                           currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().y
-                          - (list[currentlySelected].scaleY <= 1 ? 5 : 0)),
+                          - (list[currentlySelected].scaleY <= 1 ? 7 : 0)),
                           0, 0),
 
                       child: currentlySelected == -1 ? null : (list[currentlySelected] as TextModel).box,
                     ),
 
+
                   ]
                 ),
               ),
 
-              // Container(
-              //   child: currentlySelected == -1 ? null : (list[currentlySelected] as TextModel).box,
-              // ),
 
 
 
 
 
 
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                      child: FloatingActionButton(
+                        onPressed: () {
 
-              // Row(
-              //   children: [
-              //     Padding(
-              //       padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-              //       child: FloatingActionButton(
-              //         onPressed: () {
-              //           add();
-              //         },
-              //         child: const Icon(Icons.add),
-              //       ),
-              //     ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                          child: FloatingActionButton(
-                            onPressed: () {
+                          _dialogTextFieldController.text = "";
 
-                              _dialogTextFieldController.text = "";
-
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text('Enter Text'),
-                                    content: TextField(
-                                      controller: _dialogTextFieldController,
-                                      maxLines: 2,
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth);
-                                          setState(() {
-                                            Navigator.pop(context);
-                                          });
-                                        },
-                                        child: const Text('OK'),
-                                      )
-                                    ],
-                                  );
-                                }
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Enter Text'),
+                                content: TextField(
+                                  controller: _dialogTextFieldController,
+                                  maxLines: 2,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth - 10, Colors.black);
+                                      setState(() {
+                                        Navigator.pop(context);
+                                      });
+                                    },
+                                    child: const Text('OK'),
+                                  )
+                                ],
                               );
-
-                              // currentlySelected = add(list);
-                              // setState(() {});
-                            },
-                            child: const Icon(Icons.add),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                          child: TextButton(
-                            onPressed: () {
-                              if(currentlySelected != -1) {
-                                downMat.setFrom(list[currentlySelected].matrix);
-                                flipHorizontally(list, currentlySelected);
-                                setState(() {});
-                              }
-                            },
-                            child: Center(
-                              child: Column(
-                                children: const [
-                                  Text('Flip'),
-                                  Text('Horizontally'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                          child: TextButton(
-                            onPressed: () {
-                              if(currentlySelected != -1) {
-                                downMat.setFrom(list[currentlySelected].matrix);
-                                flipVertically(list, currentlySelected);
-                                setState(() {});
-                              }
-                            },
-                            child: Center(
-                              child: Column(
-                                children: const [
-                                  Text('Flip'),
-                                  Text('Vertically'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                          child: TextButton(
-                            onPressed: () {
-                              if(currentlySelected != -1) {
-                                list.removeAt(currentlySelected);
-                                setState(() {
-                                  currentlySelected = -1;
-                                });
-                              }
-                            },
-                            child: Center(
-                              child: Column(
-                                children: const [
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                          child: TextButton(
-                            onPressed: () {
-                              //Navigator.of(context).pushNamed(secondRoute);
-
-                              String? s = ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).text;
-
-                              int cnt = 0;
-
-                              for(int i = 0; i < s!.length; i++) {
-                                if(s[i] == '\n') {
-                                  cnt++;
-                                }
-                              }
-
-                              print(cnt);
-                            },
-                            child: Center(
-                              child: Column(
-                                children: const [
-                                  Text('Second'),
-                                  //Text('Rotation'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                            }
+                          );
+                        },
+                        child: const Icon(Icons.add),
+                      ),
                     ),
-                  ),
-              //   ],
-              // ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                      child: TextButton(
+                        onPressed: () {
+                          if(currentlySelected != -1) {
+                            downMat.setFrom(list[currentlySelected].matrix);
+                            flipHorizontally(list, currentlySelected);
+                            setState(() {});
+                          }
+                        },
+                        child: Center(
+                          child: Column(
+                            children: const [
+                              Text('Flip'),
+                              Text('Horizontally'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                      child: TextButton(
+                        onPressed: () {
+                          if(currentlySelected != -1) {
+                            downMat.setFrom(list[currentlySelected].matrix);
+                            flipVertically(list, currentlySelected);
+                            setState(() {});
+                          }
+                        },
+                        child: Center(
+                          child: Column(
+                            children: const [
+                              Text('Flip'),
+                              Text('Vertically'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                      child: TextButton(
+                        onPressed: () {
+                          if(currentlySelected != -1) {
+                            list.removeAt(currentlySelected);
+                            setState(() {
+                              currentlySelected = -1;
+                            });
+                          }
+                        },
+                        child: Center(
+                          child: Column(
+                            children: const [
+                              Text('Delete'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                      child: TextButton(
+                        onPressed: () {
+                          //Navigator.of(context).pushNamed(secondRoute);
+
+                          String? s = ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).text;
+
+                          int cnt = 0;
+
+                          for(int i = 0; i < s!.length; i++) {
+                            if(s[i] == '\n') {
+                              cnt++;
+                            }
+                          }
+
+                          print(cnt);
+                        },
+                        child: Center(
+                          child: Column(
+                            children: const [
+                              Text('Second'),
+                              //Text('Rotation'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -640,3 +606,18 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -31,11 +31,12 @@ int add(List<CanvasModel> list) {
   return list.length - 1;
 }
 
-int addText(List<CanvasModel> list, String s, double width) {
+int addText(List<CanvasModel> list, String s, double width, Color color) {
   deselectAll(list);
-  final textPainter = getTextPainter(s, width);
+  final textPainter = getTextPainter(s, width, color: color);
 
   list.add(TextModel(
+    originalText: s,
     textPainter: textPainter,
     matrix: Matrix4.identity(),
     matrixFrame: Matrix4.identity(),
@@ -151,85 +152,34 @@ Pair<double, double> unrotated(double x, double y, CanvasModel ob) {
   return Pair(first: newX, second: newY);
 }
 
-
-// TextPainter getTextPainter(String s, double width, {double fontSize = defaultFontSize}) {
-//   final textPainter = TextPainter(
-//     text: TextSpan(
-//       text: s,
-//       style: TextStyle(
-//         color: Colors.black,
-//         fontSize: fontSize,
-//       ),
-//     ),
-//     //textAlign: TextAlign.center,
-//     textDirection: TextDirection.ltr,
-//     maxLines: 5555,
-//   );
-//
-//   textPainter.layout(maxWidth: width);
-//
-//   return textPainter;
-// }
-
-
-
-TextPainter getTextPainter(String s, double width, {double fontSize = defaultFontSize}) {
-
-  String t = "";
-  String cur = "";
-
-  for(int i = 0; i < s.length; i++) {
-    cur += s[i];
-
-    if(!getTextPainter2(cur, width, fontSize: fontSize)) {
-      t += "\n";
-      cur = s[i];
-      print(i);
-    }
-    t += s[i];
-  }
-  print('$width   $t');
-
-
-
+TextPainter getTextPainter(String s,
+    double width,
+    {
+      Color color = Colors.black,
+      double fontSize = defaultFontSize,
+      double letterSpacing = defaultLetterSpacing}) {
 
   final textPainter = TextPainter(
     text: TextSpan(
-      text: t,
+      text: s,
       style: TextStyle(
-        color: Colors.black,
+        color: color,
         fontSize: fontSize,
+        letterSpacing: 2,
       ),
     ),
-    //textAlign: TextAlign.center,
+    textAlign: TextAlign.justify,
     textDirection: TextDirection.ltr,
     maxLines: 5555,
   );
 
   textPainter.layout(maxWidth: width);
 
+  print('${textPainter.computeLineMetrics().length}   $fontSize');
+
   return textPainter;
 }
 
-
-bool getTextPainter2(String s, double width, {double fontSize = defaultFontSize}) {
-  final textPainter = TextPainter(
-    text: TextSpan(
-      text: s,
-      style: TextStyle(
-        color: Colors.black,
-        fontSize: fontSize,
-      ),
-    ),
-    //textAlign: TextAlign.center,
-    textDirection: TextDirection.ltr,
-    maxLines: 5555,
-  );
-
-  textPainter.layout(maxWidth: 3000);
-
-  return textPainter.width <= width;
-}
 
 
 

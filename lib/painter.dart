@@ -40,7 +40,7 @@ class Painter extends CustomPainter {
                 list[i].curCircles[j].first, list[i].curCircles[j].second,
                 paintRed);
           }
-          else {
+          else if(j == 4) {
             canvas.drawCircle(list[i].curCircles[j].first, list[i].curCircles[j].second, paintGreen);
           }
         }
@@ -66,3 +66,22 @@ class Painter extends CustomPainter {
         list[i].begin.dy + list[i].height + 50), second: 5));
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
