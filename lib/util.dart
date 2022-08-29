@@ -15,21 +15,20 @@ void deselectAll(List<CanvasModel> list) {
 
 
 // this function adds a new object to the list
-int add(List<CanvasModel> list) {
-  deselectAll(list);
-  list.add(
-    CanvasModel(
-        matrix: Matrix4.identity(),
-        matrixFrame: Matrix4.identity(),
-        begin: const Offset(0, 0),
-        selected: true,
-        rotation: 0,
-        curCircles: [],
-    ),
-  );
-
-  return list.length - 1;
-}
+// int add(List<CanvasModel> list) {
+//   deselectAll(list);
+//   list.add(
+//     CanvasModel(
+//         matrix: Matrix4.identity(),
+//         matrixFrame: Matrix4.identity(),
+//         selected: true,
+//         rotation: 0,
+//         curCircles: [],
+//     ),
+//   );
+//
+//   return list.length - 1;
+// }
 
 int addText(List<CanvasModel> list, String s, double width, Color color) {
   deselectAll(list);
@@ -40,7 +39,6 @@ int addText(List<CanvasModel> list, String s, double width, Color color) {
     textPainter: textPainter,
     matrix: Matrix4.identity(),
     matrixFrame: Matrix4.identity(),
-    begin: const Offset(0, 0),
     selected: true,
     rotation: 0,
     curCircles: [],
@@ -48,6 +46,8 @@ int addText(List<CanvasModel> list, String s, double width, Color color) {
     height: textPainter.height + 10,
     widthAfterScaling: textPainter.width + 10,
     heightAfterScaling: textPainter.height + 10,
+    midX: (textPainter.width + 10) / 2,
+    midY: (textPainter.height + 10) / 2,
   ));
 
   return list.length - 1;
@@ -62,8 +62,8 @@ int getIdx(double x, double y, List<CanvasModel> list) {
     double curWidth = list[i].widthAfterScaling;
     double curHeight = list[i].heightAfterScaling;
 
-    double beginX = list[i].begin.dx + list[i].matrixFrame.getTranslation().x;
-    double beginY = list[i].begin.dy + list[i].matrixFrame.getTranslation().y;
+    double beginX = list[i].matrixFrame.getTranslation().x;
+    double beginY = list[i].matrixFrame.getTranslation().y;
 
     Pair<double, double> p = unrotated(beginX, beginY, list[i]);
     beginX = p.first;
@@ -165,7 +165,7 @@ TextPainter getTextPainter(String s,
       style: TextStyle(
         color: color,
         fontSize: fontSize,
-        letterSpacing: 2,
+        letterSpacing: letterSpacing,
       ),
     ),
     textAlign: TextAlign.justify,
@@ -174,8 +174,6 @@ TextPainter getTextPainter(String s,
   );
 
   textPainter.layout(maxWidth: width);
-
-  print('${textPainter.computeLineMetrics().length}   $fontSize');
 
   return textPainter;
 }

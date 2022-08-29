@@ -44,6 +44,24 @@ void scale(double scaleX, double scaleY, double tX, double tY, List<CanvasModel>
   list[currentlySelected].matrixFrame.setFrom(opMatFrame);
 }
 
+void scale2(double scaleX, double scaleY, double tX, double tY, List<CanvasModel> list, int currentlySelected) {
+  opMat.setFrom(downMat);
+  opMat.translate(tX, tY);
+  opMat.storage[0] = scaleX;
+  opMat.storage[5] = scaleY;
+  opMat.translate(-tX, -tY);
+  list[currentlySelected].matrix.setFrom(opMat);
+
+
+  opMatFrame.setFrom(downMatFrame);
+  opMatFrame.translate(tX, tY);
+  opMatFrame.storage[0] = scaleX;
+  opMatFrame.storage[5] = scaleY;
+  opMatFrame.translate(-tX, -tY);
+  list[currentlySelected].matrixFrame.setFrom(opMatFrame);
+}
+
+
 // to flip horizontally we need to translate the object horizontally so that beginning point moves to midpoint horizontally
 // after performing flip we need to reverse the translation
 // to perform flip operation we just multiply scaling factor by -1.  in matrix scaling factor in X axis is stored
