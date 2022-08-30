@@ -9,6 +9,16 @@ import 'canvas_model.dart';
 import 'util.dart';
 import 'operation.dart';
 
+
+
+import 'dart:ui' as ui;
+import 'dart:async';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+
+
+
+
 const secondRoute = '/test/';
 
 void main() {
@@ -586,14 +596,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     //currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
 
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Transform(
-                        transform: matrix,
-                        child://ren: [
-                        currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
-                      ),
-                    ),
+                    // SingleChildScrollView(
+                    //   scrollDirection: Axis.horizontal,
+                    //   child: Transform(
+                    //     transform: matrix,
+                    //     child://ren: [
+                    //     currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
+                    //   ),
+                    // ),
 
 
                     // Transform(
@@ -626,36 +636,50 @@ class _MyHomePageState extends State<MyHomePage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
+                    // Padding(
+                    //   padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                    //   child: FloatingActionButton(
+                    //     onPressed: () {
+                    //
+                    //       _dialogTextFieldController.text = "";
+                    //
+                    //       showDialog(
+                    //         context: context,
+                    //         builder: (context) {
+                    //           return AlertDialog(
+                    //             title: const Text('Enter Text'),
+                    //             content: TextField(
+                    //               controller: _dialogTextFieldController,
+                    //               maxLines: 2,
+                    //             ),
+                    //             actions: [
+                    //               TextButton(
+                    //                 onPressed: () {
+                    //                   currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth - 10, Colors.black);
+                    //                   setState(() {
+                    //                     Navigator.pop(context);
+                    //                   });
+                    //                 },
+                    //                 child: const Text('OK'),
+                    //               )
+                    //             ],
+                    //           );
+                    //         }
+                    //       );
+                    //     },
+                    //     child: const Icon(Icons.add),
+                    //   ),
+                    // ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
                       child: FloatingActionButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          final ByteData data = await rootBundle.load('images/kick.jpg');
+                          final image = await loadImage(Uint8List.view(data.buffer));
 
-                          _dialogTextFieldController.text = "";
+                          currentlySelected = addImage(list, image);
 
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Enter Text'),
-                                content: TextField(
-                                  controller: _dialogTextFieldController,
-                                  maxLines: 2,
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth - 10, Colors.black);
-                                      setState(() {
-                                        Navigator.pop(context);
-                                      });
-                                    },
-                                    child: const Text('OK'),
-                                  )
-                                ],
-                              );
-                            }
-                          );
+                          setState(() {});
                         },
                         child: const Icon(Icons.add),
                       ),
@@ -745,7 +769,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         onPressed: () {
                           if(currentlySelected != -1) {
                             downMat.setFrom(list[currentlySelected].matrix);
+                            print('${list[currentlySelected].isFlippedHorizontally}  ${list[currentlySelected].isFlippedVertically}');
                             flipHorizontally(list, currentlySelected);
+                            print('${list[currentlySelected].isFlippedHorizontally}  ${list[currentlySelected].isFlippedVertically}');
                             setState(() {});
                           }
                         },
@@ -766,7 +792,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         onPressed: () {
                           if(currentlySelected != -1) {
                             downMat.setFrom(list[currentlySelected].matrix);
+                            print('${list[currentlySelected].isFlippedHorizontally}  ${list[currentlySelected].isFlippedVertically}');
                             flipVertically(list, currentlySelected);
+                            print('${list[currentlySelected].isFlippedHorizontally}  ${list[currentlySelected].isFlippedVertically}');
                             setState(() {});
                           }
                         },
@@ -815,7 +843,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
-
+Future<ui.Image> loadImage(Uint8List img) async {
+  final Completer<ui.Image> completer = Completer();
+  ui.decodeImageFromList(img, (ui.Image img) {
+    return completer.complete(img);
+  });
+  return completer.future;
+}
 
 
 

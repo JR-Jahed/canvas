@@ -1,10 +1,11 @@
 import 'dart:math';
 import 'package:canvas_object/pair.dart';
+import 'package:canvas_object/stickermodel.dart';
 import 'package:canvas_object/text.dart';
 import 'package:flutter/material.dart';
 import 'canvas_model.dart';
 import 'values.dart';
-
+import 'dart:ui' as ui;
 
 // this function deselects all the objects. there should be only one selected object at any given moment
 void deselectAll(List<CanvasModel> list) {
@@ -52,6 +53,26 @@ int addText(List<CanvasModel> list, String s, double width, Color color) {
 
   return list.length - 1;
 }
+
+int addImage(List<CanvasModel> list, ui.Image image) {
+  list.add(StickerModel(
+    image: image,
+    matrix: Matrix4.identity(),
+    matrixFrame: Matrix4.identity(),
+    selected: false,
+    rotation: 0,
+    curCircles: [],
+    width: image.width.toDouble(),
+    height: image.height.toDouble(),
+    widthAfterScaling: image.width.toDouble(),
+    heightAfterScaling: image.height.toDouble(),
+    midX: (image.width.toDouble()) / 2,
+    midY: (image.height.toDouble()) / 2,
+  ));
+
+  return list.length - 1;
+}
+
 
 // this function returns the index of the object if the user tapped on it and -1 if the user tapped inside no object
 

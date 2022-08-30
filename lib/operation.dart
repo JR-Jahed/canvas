@@ -62,41 +62,6 @@ void scale2(double scaleX, double scaleY, double tX, double tY, List<CanvasModel
 }
 
 
-// to flip horizontally we need to translate the object horizontally so that beginning point moves to midpoint horizontally
-// after performing flip we need to reverse the translation
-// to perform flip operation we just multiply scaling factor by -1.  in matrix scaling factor in X axis is stored
-// in pos[0][0] or matrix.storage[0] if we consider it as a list
-
-void flipHorizontally(List<CanvasModel> list, int currentlySelected) {
-
-  opMat.setFrom(downMat);
-  opMat.translate(list[currentlySelected].width / 2, 0);
-
-  double r;
-
-  if(list[currentlySelected].isFlippedHorizontally) {
-    r = list[currentlySelected].rotation;
-  }
-  else {
-    r = -list[currentlySelected].rotation;
-  }
-
-  opMat.rotateZ(degToRad(r));
-  opMat.storage[0] *= -1;
-
-  if(list[currentlySelected].isFlippedHorizontally) {
-    r = list[currentlySelected].rotation;
-  }
-  else {
-    r = -list[currentlySelected].rotation;
-  }
-
-  opMat.rotateZ(degToRad(r));
-  list[currentlySelected].isFlippedHorizontally ^= true;
-
-  opMat.translate(-list[currentlySelected].width / 2, 0);
-  list[currentlySelected].matrix.setFrom(opMat);
-}
 
 // if the object is flipped in any direction then rotation is performed in opposite direction
 // to prevent that we multiply rotation angle by -1
@@ -125,6 +90,70 @@ void rotate(double r, double tX, double tY, List<CanvasModel> list, int currentl
   list[currentlySelected].matrixFrame.setFrom(opMatFrame);
 }
 
+
+
+// to flip horizontally we need to translate the object horizontally so that beginning point moves to midpoint horizontally
+// after performing flip we need to reverse the translation
+// to perform flip operation we just multiply scaling factor by -1.  in matrix scaling factor in X axis is stored
+// in pos[0][0] or matrix.storage[0] if we consider it as a list
+
+void flipHorizontally(List<CanvasModel> list, int currentlySelected) {
+
+  if(list[currentlySelected].isFlippedHorizontally && list[currentlySelected].isFlippedVertically) {
+    bothFlipVertical(list, currentlySelected);
+
+    list[currentlySelected].isFlippedHorizontally = false;
+    return;
+  }
+
+  if(!list[currentlySelected].isFlippedHorizontally) {
+    if(list[currentlySelected].isFlippedVertically) {
+      flipVertically2(list, currentlySelected);
+    }
+    else {
+      flipHorizontally2(list, currentlySelected);
+    }
+
+    list[currentlySelected].isFlippedHorizontally = true;
+  }
+  else {
+    if(list[currentlySelected].isFlippedVertically) {
+      flipVertically2(list, currentlySelected);
+    }
+    else {
+      flipHorizontally2(list, currentlySelected);
+    }
+
+    list[currentlySelected].isFlippedHorizontally = false;
+  }
+}
+
+void flipHorizontally2(List<CanvasModel> list, int currentlySelected) {
+
+  opMat.setFrom(downMat);
+  opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+
+  double r;
+
+  if(list[currentlySelected].isFlippedHorizontally) {
+    r = list[currentlySelected].rotation;
+  }
+  else {
+    r = -list[currentlySelected].rotation;
+  }
+
+  opMat.rotateZ(degToRad(r));
+  opMat.storage[0] *= -1;
+
+  opMat.rotateZ(degToRad(r));
+
+  opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
+  list[currentlySelected].matrix.setFrom(opMat);
+
+}
+
+
+
 // to flip vertically we need to translate the object vertically so that beginning point moves to midpoint vertically
 // after performing flip we need to reverse the translation
 // to perform flip operation we just multiply scaling factor by -1.  in matrix scaling factor in Y axis is stored
@@ -132,6 +161,38 @@ void rotate(double r, double tX, double tY, List<CanvasModel> list, int currentl
 
 void flipVertically(List<CanvasModel> list, int currentlySelected) {
 
+  if(list[currentlySelected].isFlippedHorizontally && list[currentlySelected].isFlippedVertically) {
+    bothFlipHorizontal(list, currentlySelected);
+    list[currentlySelected].isFlippedVertically = false;
+    return;
+  }
+
+  if(!list[currentlySelected].isFlippedVertically) {
+    if (list[currentlySelected].isFlippedHorizontally) {
+      flipHorizontally2(list, currentlySelected);
+    }
+    else {
+      flipVertically2(list, currentlySelected);
+    }
+
+    list[currentlySelected].isFlippedVertically = true;
+  }
+  else {
+    if(list[currentlySelected].isFlippedHorizontally) {
+
+      flipHorizontally2(list, currentlySelected);
+    }
+    else {
+      flipVertically2(list, currentlySelected);
+    }
+
+    list[currentlySelected].isFlippedVertically = false;
+  }
+}
+
+
+
+void flipVertically2(List<CanvasModel> list, int currentlySelected) {
   opMat.setFrom(downMat);
   opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
 
@@ -146,15 +207,36 @@ void flipVertically(List<CanvasModel> list, int currentlySelected) {
 
   opMat.rotateZ(degToRad(r));
   opMat.storage[5] *= -1;
-  if(list[currentlySelected].isFlippedVertically) {
-    r = list[currentlySelected].rotation;
-  }
-  else {
-    r = -list[currentlySelected].rotation;
-  }
 
   opMat.rotateZ(degToRad(r));
-  list[currentlySelected].isFlippedVertically ^= true;
+
+  opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
+  list[currentlySelected].matrix.setFrom(opMat);
+}
+
+void bothFlipHorizontal(List<CanvasModel> list, int currentlySelected) {
+
+  opMat.setFrom(downMat);
+  opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+
+  opMat.rotateZ(degToRad(-list[currentlySelected].rotation));
+  opMat.storage[0] *= -1;
+
+  opMat.rotateZ(degToRad(-list[currentlySelected].rotation));
+
+  opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
+  list[currentlySelected].matrix.setFrom(opMat);
+}
+
+void bothFlipVertical(List<CanvasModel> list, int currentlySelected) {
+
+  opMat.setFrom(downMat);
+  opMat.translate(list[currentlySelected].width / 2, list[currentlySelected].height / 2);
+
+  opMat.rotateZ(degToRad(-list[currentlySelected].rotation));
+  opMat.storage[5] *= -1;
+
+  opMat.rotateZ(degToRad(-list[currentlySelected].rotation));
 
   opMat.translate(-list[currentlySelected].width / 2, -list[currentlySelected].height / 2);
   list[currentlySelected].matrix.setFrom(opMat);

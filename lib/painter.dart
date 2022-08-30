@@ -1,4 +1,8 @@
+import 'dart:math';
+
 import 'package:canvas_object/pair.dart';
+import 'package:canvas_object/stickermodel.dart';
+import 'package:canvas_object/values.dart';
 import 'package:flutter/material.dart';
 import 'package:canvas_object/paint.dart';
 import 'canvas_model.dart';
@@ -16,11 +20,27 @@ class Painter extends CustomPainter {
     for(int i = 0; i < list.length; i++) {
 
       canvas.save();
-      canvas.transform(list[i].matrix.storage);
+
+      Matrix4 matrix = Matrix4.identity();
+      matrix.setFrom(list[i].matrix);
+
+      if(list[i].isFlippedHorizontally && list[i].isFlippedVertically) {
+        opMat.setFrom(matrix);
+        opMat.translate(list[i].width / 2, list[i].height / 2);
+        opMat.rotateZ(pi);
+        opMat.translate(-list[i].width / 2, -list[i].height / 2);
+        matrix.setFrom(opMat);
+      }
+
+      canvas.transform(matrix.storage);
 
       if(list[i] is TextModel && (list[i] as TextModel).shouldDrawText) {
         (list[i] as TextModel).textPainter.paint(
             canvas, const Offset(5, 5));
+      }
+
+      if(list[i] is StickerModel) {
+        canvas.drawImage((list[i] as StickerModel).image, const Offset(0, 0), Paint());
       }
 
       if(list[i].selected) {
