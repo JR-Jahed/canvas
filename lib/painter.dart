@@ -18,7 +18,6 @@ class Painter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
 
     for(int i = 0; i < list.length; i++) {
-
       canvas.save();
 
       Matrix4 matrix = Matrix4.identity();
@@ -81,7 +80,7 @@ class Painter extends CustomPainter {
 
     list[i].curCircles.add(Pair(first: Offset(list[i].width, list[i].height), second: 5));
 
-    list[i].curCircles.add(Pair(first: Offset(list[i].width / 2, list[i].height + 50), second: 5));
+    //list[i].curCircles.add(Pair(first: Offset(list[i].width / 2, list[i].height + 50), second: 5));
   }
 }
 

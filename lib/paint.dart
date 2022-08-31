@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 final Paint paintObject = Paint()
   ..style = PaintingStyle.stroke
-  ..strokeWidth = 4.0
+  ..strokeWidth = 2.0
   ..color = Colors.blue;
 
 final Paint paintRed = Paint()..color = Colors.red;

@@ -17,8 +17,6 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
 
-
-
 const secondRoute = '/test/';
 
 void main() {
@@ -297,15 +295,15 @@ class _MyHomePageState extends State<MyHomePage> {
       downMat.setFrom(list[currentlySelected].matrix);
       downMatFrame.setFrom(list[currentlySelected].matrixFrame);
 
-      idxOfSelectedCircle = getIdxOfCircle(tapX, tapY, list, currentlySelected);
-
-      if (idxOfSelectedCircle != -1) {
-        if(idxOfSelectedCircle == 4) {
-          rotationAtBeginningOfDrag = list[currentlySelected].rotation;
-        }
-        shouldChangeState = true;
-        list[currentlySelected].curCircles[idxOfSelectedCircle].second = 10;
-      }
+      // idxOfSelectedCircle = getIdxOfCircle(tapX, tapY, list, currentlySelected);
+      //
+      // if (idxOfSelectedCircle != -1) {
+      //   if(idxOfSelectedCircle == 4) {
+      //     rotationAtBeginningOfDrag = list[currentlySelected].rotation;
+      //   }
+      //   shouldChangeState = true;
+      //   list[currentlySelected].curCircles[idxOfSelectedCircle].second = 10;
+      // }
       if (shouldChangeState) {
         setState(() {});
       }
@@ -520,6 +518,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if(dragging) {
       list[currentlySelected].midX += (lastTouchedX - lastX);
       list[currentlySelected].midY += (lastTouchedY - lastY);
+      setState(() {}); // to show card above the object and rotation icon
     }
     dragging = false;
     lastTouchedX = lastTouchedY = -1;
@@ -589,37 +588,72 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                     ),
 
+                    currentlySelected == -1 || dragging || idxOfSelectedCircle != -1 ? Container() : Positioned(
+                      left: list[currentlySelected].midX - 75,
+                      top: list[currentlySelected].midY - list[currentlySelected].heightAfterScaling / 2 >= 100 ?
+                          list[currentlySelected].midY - list[currentlySelected].heightAfterScaling / 2 - 100 :
+                          list[currentlySelected].midY + list[currentlySelected].heightAfterScaling / 2 + 50,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        shadowColor: Colors.black,
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.add_box_outlined),
+                              onPressed: () {
+                                setState(() {
+                                  addText(list,
+                                      ((list[currentlySelected] as TextModel).textPainter.text as TextSpan).text!,
+                                      screenWidth - 10,
+                                      Colors.black);
+                                });
+                              },
+                              tooltip: 'Duplicate',
+                            ),
 
-                    // Container(
-                    //   child: currentlySelected == -1 ? null : (list[currentlySelected] as TextModel).box,
-                    // ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  list.removeAt(currentlySelected);
+                                  currentlySelected = - 1;
+                                });
+                              },
+                              icon: const Icon(Icons.delete),
+                              tooltip: 'Delete',
+                            ),
 
-                    //currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
+                            IconButton(
+                              onPressed: () {
 
-                    // SingleChildScrollView(
-                    //   scrollDirection: Axis.horizontal,
-                    //   child: Transform(
-                    //     transform: matrix,
-                    //     child://ren: [
-                    //     currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
-                    //   ),
-                    // ),
+                              },
+                              icon: const Icon(Icons.more_vert),
+                              tooltip: 'More',
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
 
+                    currentlySelected == -1 || dragging || idxOfSelectedCircle != -1 ? Container() : Positioned(
+                      left: list[currentlySelected].midY - list[currentlySelected].heightAfterScaling / 2 >= 100 ?
+                            list[currentlySelected].midX - 15 :
+                            list[currentlySelected].midX + list[currentlySelected].widthAfterScaling / 2 + 50,
 
-                    // Transform(
-                    //   transform: matrix,
-                    //   child: currentlySelected == -1 ? const SizedBox() : (list[currentlySelected] as TextModel).box,
-                    // ),
+                      top: list[currentlySelected].midY - list[currentlySelected].heightAfterScaling / 2 >= 100 ?
+                           list[currentlySelected].midY + list[currentlySelected].heightAfterScaling / 2 + 30 * list[currentlySelected].scaleY :
+                           list[currentlySelected].midY - 20,
 
-                    // Padding(
-                    //   padding: EdgeInsets.fromLTRB(
-                    //       currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().x + 5 * list[currentlySelected].scaleX),
-                    //       currentlySelected == -1 ? 0 : max(0, list[currentlySelected].matrix.getTranslation().y
-                    //       - (list[currentlySelected].scaleY <= 1 ? 7 : 5.5)),
-                    //       0, 0),
-                    //
-                    //   child: currentlySelected == -1 ? null : (list[currentlySelected] as TextModel).box,
-                    // ),
+                      // child: IconButton(
+                      //   icon: const Icon(Icons.rotate_left),
+                      //
+                      //   onPressed: () {
+                      //   },
+                      // )
+                      child: const Icon(Icons.rotate_left),
+                    ),
 
 
                   ]
@@ -636,54 +670,54 @@ class _MyHomePageState extends State<MyHomePage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    // Padding(
-                    //   padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
-                    //   child: FloatingActionButton(
-                    //     onPressed: () {
-                    //
-                    //       _dialogTextFieldController.text = "";
-                    //
-                    //       showDialog(
-                    //         context: context,
-                    //         builder: (context) {
-                    //           return AlertDialog(
-                    //             title: const Text('Enter Text'),
-                    //             content: TextField(
-                    //               controller: _dialogTextFieldController,
-                    //               maxLines: 2,
-                    //             ),
-                    //             actions: [
-                    //               TextButton(
-                    //                 onPressed: () {
-                    //                   currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth - 10, Colors.black);
-                    //                   setState(() {
-                    //                     Navigator.pop(context);
-                    //                   });
-                    //                 },
-                    //                 child: const Text('OK'),
-                    //               )
-                    //             ],
-                    //           );
-                    //         }
-                    //       );
-                    //     },
-                    //     child: const Icon(Icons.add),
-                    //   ),
-                    // ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
                       child: FloatingActionButton(
-                        onPressed: () async {
-                          final ByteData data = await rootBundle.load('images/kick.jpg');
-                          final image = await loadImage(Uint8List.view(data.buffer));
+                        onPressed: () {
 
-                          currentlySelected = addImage(list, image);
+                          _dialogTextFieldController.text = "";
 
-                          setState(() {});
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Enter Text'),
+                                content: TextField(
+                                  controller: _dialogTextFieldController,
+                                  maxLines: 2,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      currentlySelected = addText(list, _dialogTextFieldController.text, screenWidth - 10, Colors.black);
+                                      setState(() {
+                                        Navigator.pop(context);
+                                      });
+                                    },
+                                    child: const Text('OK'),
+                                  )
+                                ],
+                              );
+                            }
+                          );
                         },
                         child: const Icon(Icons.add),
                       ),
                     ),
+                    // Padding(
+                    //   padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
+                    //   child: FloatingActionButton(
+                    //     onPressed: () async {
+                    //       final ByteData data = await rootBundle.load('images/kick.jpg');
+                    //       final image = await loadImage(Uint8List.view(data.buffer));
+                    //
+                    //       currentlySelected = addImage(list, image);
+                    //
+                    //       setState(() {});
+                    //     },
+                    //     child: const Icon(Icons.add),
+                    //   ),
+                    // ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 0, 0),
                       child: TextButton(

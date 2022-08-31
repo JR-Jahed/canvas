@@ -113,7 +113,7 @@ int getIdx(double x, double y, List<CanvasModel> list) {
 // the indexing is according to the order of insertion to the list in painter.dart file addToList function
 
 int getIdxOfCircle(double x, double y, List<CanvasModel> list, int currentlySelected) {
-  if (currentlySelected == -1) return -1;
+  if (currentlySelected == -1 || list[currentlySelected].curCircles.isEmpty) return -1;
 
   double curWidth = list[currentlySelected].widthAfterScaling;
   double curHeight = list[currentlySelected].heightAfterScaling;
@@ -134,7 +134,7 @@ int getIdxOfCircle(double x, double y, List<CanvasModel> list, int currentlySele
 
   tmp.add(Offset(upperLeft.dx + curWidth, upperLeft.dy + curHeight));
 
-  tmp.add(Offset(upperLeft.dx + curWidth / 2, upperLeft.dy + curHeight + 50 * list[currentlySelected].scaleY));
+  // tmp.add(Offset(upperLeft.dx + curWidth / 2, upperLeft.dy + curHeight + 50 * list[currentlySelected].scaleY));
 
   //print('x = $x  y = $y');
   p = unrotated(x, y, list[currentlySelected]);

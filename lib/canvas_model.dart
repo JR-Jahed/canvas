@@ -35,8 +35,8 @@ class CanvasModel {
     required this.height,
     required this.widthAfterScaling,
     required this.heightAfterScaling,
-    this.midX = -1,
-    this.midY = -1,
+    required this.midX,
+    required this.midY,
     this.isFlippedHorizontally = false,
     this.isFlippedVertically = false,
   });
